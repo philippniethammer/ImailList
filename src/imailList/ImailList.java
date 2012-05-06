@@ -15,6 +15,7 @@ import java.util.List;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource;
+import com.j256.ormlite.logger.LocalLog;
 import com.j256.ormlite.table.TableUtils;
 
 public class ImailList extends Thread {
@@ -40,7 +41,7 @@ public class ImailList extends Thread {
 			e.printStackTrace();
 		}
 		// only keep the connections open for 5 minutes
-		connectionSource.setMaxConnectionAgeMillis(2 * 60 * 1000);
+		connectionSource.setMaxConnectionAgeMillis(60 * 1000);
 	}
 	
 	private void installTables() {
@@ -73,6 +74,7 @@ public class ImailList extends Thread {
 	
 	public void run() {
 		while (!this.isInterrupted()) {
+			System.out.println("Main: Syncing servers.");
 			List<Server> servers = getAllServers();
 			
 			for (Server s : servers) {
@@ -92,6 +94,9 @@ public class ImailList extends Thread {
 	}
 	
 	public static void main(String args[]) throws IOException {
+		
+		System.setProperty(LocalLog.LOCAL_LOG_LEVEL_PROPERTY, "WARNING");
+		
 		for (int i=0; i<args.length; i++) {
 			if (args[i] == "-l" || args[i] == "--logfile") {
 				String logfile = args[++i];

@@ -29,6 +29,11 @@ public class ImapListener extends Thread {
 		this.start();
 	}
 
+	/**
+	 * Connect to IMAP server.
+	 * 
+	 * @throws MessagingException
+	 */
 	protected void connect() throws MessagingException {
 		Properties props = System.getProperties();
 
@@ -41,9 +46,14 @@ public class ImapListener extends Thread {
 
 		// Connect
 		store.connect(server.getHost(), server.getUser(), server.getPassword());
-		System.out.println("Connected to Server #" + server.getId());
+		System.out.println("Server #" + server.getId()+ ": connected.");
 	}
 
+	/**
+	 * Add new message listener for folder.
+	 * 
+	 * @throws Exception
+	 */
 	protected void installFolderListener() throws Exception {
 
 		// Open a Folder
@@ -53,6 +63,7 @@ public class ImapListener extends Thread {
 		}
 
 		folder.open(Folder.READ_WRITE);
+		System.out.println("Server #" + server.getId()+ ": folder opened.");
 
 		// Add messageCountListener to listen for new messages
 		folder.addMessageCountListener(new MessageCountAdapter() {
@@ -68,65 +79,69 @@ public class ImapListener extends Thread {
 		});
 	}
 
+	/**
+	 * Main loop.
+	 * 
+	 * Opens the folder to listen on. If activated and possible, goes to IDLE,
+	 * else rechecks folder after the given interval. 
+	 * 
+	 */
 	public void run() {
 		System.out.println("Starting server #" + server.getId() + " Host: "
 				+ server.getHost() + " User: " + server.getHost());
-		while (true) {
-			try {
-				if (store == null || !store.isConnected()) {
-					connect();
-				}
-				installFolderListener();
+		try {
+			if (store == null || !store.isConnected()) {
+				connect();
+			}
+			installFolderListener();
 
-				boolean supportsIdle = false;
-				try {
-					if (folder instanceof IMAPFolder) {
-						IMAPFolder f = (IMAPFolder) folder;
-						f.idle();
-						supportsIdle = true;
-					}
-				} catch (FolderClosedException fex) {
-					fex.printStackTrace();
-				} catch (MessagingException mex) {
-					supportsIdle = false;
+			boolean supportsIdle = false;
+			try {
+				if (folder instanceof IMAPFolder) {
+					IMAPFolder f = (IMAPFolder) folder;
+					supportsIdle = true;
+					f.idle();
 				}
-				while (true) {
+			} catch (FolderClosedException fex) {
+				System.out.println("Server #"+server.getId()+": Folder closed. Reason: "+fex.getMessage());
+			} catch (MessagingException mex) {
+				supportsIdle = false;
+			}
+			while (true) {
+				try {
+
 					if (store == null || !store.isConnected()) {
 						connect();
 					}
 					if (folder == null || !folder.isOpen()) {
 						installFolderListener();
 					}
-					
+
 					if (supportsIdle && server.isUseIdle()
 							&& folder instanceof IMAPFolder) {
 						IMAPFolder f = (IMAPFolder) folder;
 						f.idle();
 						System.out.println("IDLE done");
 					} else {
-						Thread.sleep(server.getCheckFrequency() * 1000); // sleep
-																			// for
-																			// freq
-																			// milliseconds
+						Thread.sleep(server.getCheckFrequency() * 1000);
 
 						// This is to force the IMAP server to send us
 						// EXISTS notifications.
 						folder.getMessageCount();
 					}
+				} catch (FolderClosedException e) {
+					System.out.println("Server #"+server.getId()+": Folder closed. Reason: "+e.getMessage());
+				} catch (MessagingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-			} catch (FolderClosedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (MessagingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 }

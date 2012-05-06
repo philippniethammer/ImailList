@@ -104,6 +104,7 @@ public class IncommingMailHandler extends Thread {
 	}
 
 	private void refreshMap() {
+		System.out.println("Server #"+server.getId()+": Syncing lists.");
 		try {
 			server.getLists().refreshCollection();
 		} catch (SQLException e) {
