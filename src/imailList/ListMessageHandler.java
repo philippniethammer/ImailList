@@ -34,6 +34,8 @@ public class ListMessageHandler extends Thread {
 	private MailingList list;
 	private Server server;
 	private Store store;
+	
+	private String bounce;
 
 	public ListMessageHandler(Server server, MailingList list, Message message) {
 		this.server = server;
@@ -113,14 +115,19 @@ public class ListMessageHandler extends Thread {
 				}
 				msg.setSubject(subject);
 			}
+			
+			bounce = "<" + list.getListenAddress().replace("@", "+bounces@") + ">";
 
-			msg.setHeader("Sender", list.getListenAddress());
+			//msg.setHeader("Sender", list.getListenAddress());
 			msg.addHeader("X-BeenThere", list.getListenAddress());
-			msg.setHeader("Return-Path",
-					"<" + list.getListenAddress().replace("@", "+bounces@") + ">");
+			msg.removeHeader("Delivered-To");
+			msg.removeHeader("Return-Path");
+			msg.setHeader("Return-Path", bounce);
 			msg.setHeader("Precedence", "list");
 			msg.setHeader("Mailing-list", "list " + list.getListenAddress());
 			msg.setHeader("List-ID", "<" + list.getListenAddress() + ">");
+			msg.setHeader("Errors-To", bounce);
+			msg.setHeader("List-Post", "<mailto:" + list.getListenAddress() + ">");
 
 			if (list.isAnswerToAll()) {
 				msg.setReplyTo(new Address[] { new InternetAddress(list
@@ -141,6 +148,12 @@ public class ListMessageHandler extends Thread {
 
 	private void sendMessage(Message message, List<Address> recipients) {
 		Properties props = System.getProperties();
+		
+		//Send if some recipients failed check.
+		props.put("mail.smtp.sendpartial", true);
+		
+		// Set "MAIL FROM" address for return-path
+		props.put("mail.smtp.from", bounce);
 
 	    // Get a Session object
 	    Session session = Session.getInstance(props, null);
@@ -173,9 +186,9 @@ public class ListMessageHandler extends Thread {
 			
 			List<Address> recs = new ArrayList<Address>();
 			for (Member member : list.getMembers()) {
-				if (froms.contains(member.getMail().toLowerCase()) || !member.isActive()) {
-					continue;
-				}
+//				if (froms.contains(member.getMail().toLowerCase()) || !member.isActive()) {
+//					continue;
+//				}
 				recs.add(new InternetAddress(member.getMail(), member.getName()));
 			}
 			

@@ -89,7 +89,9 @@ public class ImailList extends Thread {
 			}
 			try {
 				Thread.sleep(Integer.parseInt(Config.getInstance().getProperty("syncIntervall", "300"))*1000);
-			} catch (InterruptedException e) {	}
+			} catch (InterruptedException e) {
+				System.out.println("Main: Syncing interrupted.");
+			}
 		}
 	}
 	

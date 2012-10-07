@@ -12,16 +12,16 @@ public class MailingList {
 	private int id;
 	
 	@DatabaseField
-	private String name;
+	private String name = "";
 	
 	@DatabaseField
-	private String listenAddress;
+	private String listenAddress = "";
 	
 	@DatabaseField
 	private boolean archive;
 	
 	@DatabaseField
-	private String archiveFolder;
+	private String archiveFolder = "";
 	
 	@DatabaseField
 	private String tag;

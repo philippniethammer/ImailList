@@ -100,7 +100,9 @@ public class ImapListener extends Thread {
 				if (folder instanceof IMAPFolder) {
 					IMAPFolder f = (IMAPFolder) folder;
 					supportsIdle = true;
+					System.out.println("Server #"+server.getId()+": Go into IDLE mode.");
 					f.idle();
+					System.out.println("Server #"+server.getId()+": IDLE done");
 				}
 			} catch (FolderClosedException fex) {
 				System.out.println("Server #"+server.getId()+": Folder closed. Reason: "+fex.getMessage());
@@ -109,6 +111,7 @@ public class ImapListener extends Thread {
 			}
 			while (true) {
 				try {
+					System.out.println("Server #"+server.getId()+": [Debug] iteration.");
 
 					if (store == null || !store.isConnected()) {
 						connect();
@@ -120,9 +123,11 @@ public class ImapListener extends Thread {
 					if (supportsIdle && server.isUseIdle()
 							&& folder instanceof IMAPFolder) {
 						IMAPFolder f = (IMAPFolder) folder;
+						System.out.println("Server #"+server.getId()+": Go into IDLE mode.");
 						f.idle();
-						System.out.println("IDLE done");
+						System.out.println("Server #"+server.getId()+": IDLE done");
 					} else {
+						System.out.println("Server #"+server.getId()+": Run without IDLE.");
 						Thread.sleep(server.getCheckFrequency() * 1000);
 
 						// This is to force the IMAP server to send us
