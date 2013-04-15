@@ -109,6 +109,10 @@ public class ImapListener extends Thread {
 			} catch (MessagingException mex) {
 				supportsIdle = false;
 			}
+			
+			//wait time in seconds for retry after exception. Doubles with each exception, resets on connect.
+			int waitInterval = 1;
+			
 			while (true) {
 				try {
 					System.out.println("Server #"+server.getId()+": [Debug] iteration.");
@@ -119,6 +123,8 @@ public class ImapListener extends Thread {
 					if (folder == null || !folder.isOpen()) {
 						installFolderListener();
 					}
+					
+					waitInterval = 1;
 
 					if (supportsIdle && server.isUseIdle()
 							&& folder instanceof IMAPFolder) {
@@ -139,6 +145,8 @@ public class ImapListener extends Thread {
 				} catch (MessagingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					Thread.sleep(waitInterval * 1000);
+					waitInterval *= 2;
 				}
 			}
 		} catch (InterruptedException e) {

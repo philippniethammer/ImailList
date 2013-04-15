@@ -186,9 +186,12 @@ public class ListMessageHandler extends Thread {
 			
 			List<Address> recs = new ArrayList<Address>();
 			for (Member member : list.getMembers()) {
-//				if (froms.contains(member.getMail().toLowerCase()) || !member.isActive()) {
-//					continue;
-//				}
+				if (!member.isActive()) {
+					continue;
+				}
+				if (this.list.isExcludeSender() && froms.contains(member.getMail().toLowerCase())) {
+					continue;
+				}
 				recs.add(new InternetAddress(member.getMail(), member.getName()));
 			}
 			

@@ -17,6 +17,9 @@ public class MailingList {
 	@DatabaseField
 	private String listenAddress = "";
 	
+	@DatabaseField 
+	private String owner = "";
+	
 	@DatabaseField
 	private boolean archive;
 	
@@ -31,6 +34,9 @@ public class MailingList {
 	
 	@DatabaseField
 	private boolean allowExternal;
+	
+	@DatabaseField
+	private boolean excludeSender;
 	
 	@ForeignCollectionField(eager=false)
 	private ForeignCollection<Member> members;
@@ -82,6 +88,20 @@ public class MailingList {
 	 */
 	public void setListenAddress(String listenAddress) {
 		this.listenAddress = listenAddress;
+	}
+
+	/**
+	 * @return the owner
+	 */
+	public String getOwner() {
+		return owner;
+	}
+
+	/**
+	 * @param owner the owner to set
+	 */
+	public void setOwner(String owner) {
+		this.owner = owner;
 	}
 
 	/**
@@ -152,6 +172,20 @@ public class MailingList {
 	 */
 	public void setAllowExternal(boolean allowExternal) {
 		this.allowExternal = allowExternal;
+	}
+
+	/**
+	 * @return the excludeSender
+	 */
+	public boolean isExcludeSender() {
+		return excludeSender;
+	}
+
+	/**
+	 * @param excludeSender the excludeSender to set
+	 */
+	public void setExcludeSender(boolean excludeSender) {
+		this.excludeSender = excludeSender;
 	}
 
 	/**
