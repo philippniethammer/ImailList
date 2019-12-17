@@ -23,6 +23,8 @@
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
+	  <finalName>imailList</finalName>
+          <appendAssemblyId>false</appendAssemblyId>
           <source>1.7</source>
           <target>1.7</target>
           <archive>
@@ -31,6 +33,15 @@
             </manifest>
           </archive>
         </configuration>
+	<executions>
+	  <execution>
+	    <id>make-assembly</id> <!-- this is used for inheritance merges -->
+	    <phase>package</phase> <!-- bind to the packaging phase -->
+	    <goals>
+	      <goal>single</goal>
+	    </goals>
+	  </execution>
+	</executions>
       </plugin>
     </plugins>
   </build>
