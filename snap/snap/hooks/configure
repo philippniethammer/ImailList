@@ -1,0 +1,11 @@
+#!/bin/sh -e
+
+sql_uri="$(snapctl get sql-uri)"
+username="$(snapctl get sql-username)"
+password="$(snapctl get sql-password)"
+syncInterval="$(snapctl get sync-interval)"
+
+echo "jdbcURI=$sql_uri" > $SNAP_DATA/imaillist.cfg
+echo "jdbcUser=$username" >> $SNAP_DATA/imaillist.cfg
+echo "jdbcPass=$password" >> $SNAP_DATA/imaillist.cfg
+echo "syncIntervall=$syncInterval" >> $SNAP_DATA/imaillist.cfg

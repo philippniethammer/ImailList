@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+# Initialize the sleep time to a default
+snapctl set sql-uri=jdbc:mysql://localhost/imaillist
+snapctl set sql-username=root
+snapctl set sql-password=
+snapctl set sync-interval=300
