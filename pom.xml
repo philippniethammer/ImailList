@@ -11,8 +11,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.8</source>
+          <target>1.8</target>
         </configuration>
       </plugin>
       <plugin>
@@ -25,8 +25,8 @@
           </descriptorRefs>
 	  <finalName>imailList</finalName>
           <appendAssemblyId>false</appendAssemblyId>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.8</source>
+          <target>1.8</target>
           <archive>
             <manifest>
               <mainClass>imailList.ImailList</mainClass>
@@ -56,13 +56,13 @@
   		<artifactId>ormlite-core</artifactId>
   		<version>4.48</version>
   	</dependency>
-  	<dependency>
-  		<groupId>javax.mail</groupId>
-  		<artifactId>mail</artifactId>
-  		<version>1.5.0-b01</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>mysql</groupId>
+	  <dependency>
+		  <groupId>com.sun.mail</groupId>
+		  <artifactId>javax.mail</artifactId>
+		  <version>1.6.2</version>
+	  </dependency>
+	  <dependency>
+		  <groupId>mysql</groupId>
   		<artifactId>mysql-connector-java</artifactId>
   		<version>5.1.36</version>
   	</dependency>

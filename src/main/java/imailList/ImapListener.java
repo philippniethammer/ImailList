@@ -1,26 +1,27 @@
 package imailList;
 
+import com.sun.mail.imap.SortTerm;
 import imailList.model.Server;
 
 import java.util.Properties;
 
-import javax.mail.AuthenticationFailedException;
-import javax.mail.Folder;
-import javax.mail.FolderClosedException;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Store;
+import javax.mail.*;
 import javax.mail.event.MessageCountAdapter;
 import javax.mail.event.MessageCountEvent;
+import javax.mail.search.AndTerm;
+import javax.mail.search.FlagTerm;
 
+import com.sun.mail.imap.IMAPStore;
 import com.sun.mail.imap.IMAPFolder;
+import com.sun.mail.imap.SortTerm;
+
+import static com.sun.mail.imap.SortTerm.REVERSE;
 
 public class ImapListener extends Thread {
 
 	Session session;
-	Store store;
-	Folder folder;
+	IMAPStore store;
+	IMAPFolder folder;
 	IncommingMailHandler mh;
 	private Server server;
 
@@ -38,19 +39,21 @@ public class ImapListener extends Thread {
 	 */
 	protected void connect() throws MessagingException, InterruptedException {
 		Properties props = System.getProperties();
+		props.putIfAbsent("mail.imap.connectiontimeout", "300000");
 
 		// Get a Session object
 		Session session = Session.getInstance(props, null);
 		// session.setDebug(true);
 
 		// Get a Store object
-		store = session.getStore("imap");
+		URLName imapUrl = new URLName("imap", server.getHost(), -1, null, server.getUser(), server.getPassword());
+		store = new IMAPStore(session, imapUrl);
 
 		int retries = 5;
 		// Connect
 		while (!store.isConnected()) {
 			try {
-				store.connect(server.getHost(), server.getUser(), server.getPassword());
+				store.connect();
 				System.out.println(String.format("[%d:%s@%s] Connected.",
 						server.getId(), server.getUser(), server.getHost()));
 			} catch (AuthenticationFailedException e) {
@@ -78,7 +81,7 @@ public class ImapListener extends Thread {
 	protected void installFolderListener() throws Exception {
 
 		// Open a Folder
-		folder = store.getFolder(server.getListenFolder());
+		folder = (IMAPFolder) store.getFolder(server.getListenFolder());
 		if (folder == null || !folder.exists()) {
 			throw new Exception("Folder does not exist.");
 		}
@@ -86,6 +89,23 @@ public class ImapListener extends Thread {
 		folder.open(Folder.READ_WRITE);
 		System.out.println(String.format("[%d:%s@%s] folder %s opened.",
 				server.getId(), server.getUser(), server.getHost(), server.getListenFolder()));
+
+		// Get missed messages
+		try {
+			Message[] newMessages = folder.getSortedMessages(new SortTerm[] {SortTerm.ARRIVAL, SortTerm.REVERSE},
+															 new AndTerm(new FlagTerm(new Flags(Flags.Flag.FLAGGED), false),
+																    	 new FlagTerm(new Flags(Flags.Flag.DELETED), false)));
+			if (newMessages != null) {
+				System.out.println(String.format("[%d:%s@%s] Processing %d missed messages.",
+						server.getId(), server.getUser(), server.getHost(), newMessages.length));
+				for (Message msg : newMessages) {
+					mh.handle(msg);
+				}
+			}
+		} catch (MessagingException e) {
+			System.out.println(String.format("[%d:%s@%s] Cannot search for missed messages: %s",
+					server.getId(), server.getUser(), server.getHost(), e.getMessage()));
+		}
 
 		// Add messageCountListener to listen for new messages
 		folder.addMessageCountListener(new MessageCountAdapter() {
