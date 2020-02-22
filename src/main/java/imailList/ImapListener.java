@@ -92,7 +92,7 @@ public class ImapListener extends Thread {
 
 		// Get missed messages
 		try {
-			Message[] newMessages = folder.getSortedMessages(new SortTerm[] {SortTerm.ARRIVAL, SortTerm.REVERSE},
+			Message[] newMessages = folder.getSortedMessages(new SortTerm[] {SortTerm.REVERSE, SortTerm.ARRIVAL},
 															 new AndTerm(new FlagTerm(new Flags(Flags.Flag.FLAGGED), false),
 																    	 new FlagTerm(new Flags(Flags.Flag.DELETED), false)));
 			if (newMessages != null) {
