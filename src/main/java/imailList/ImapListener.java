@@ -205,11 +205,6 @@ public class ImapListener extends Thread {
 				supportsIdle = false;
 			}
 
-	                // Shutdown keep alive thread
-			if (keepAlive.isAlive()) {
-				keepAlive.interrupt();
-		        }
-			
 			//wait time in seconds for retry after exception. Doubles with each exception, resets on connect.
 			int waitInterval = 1;
 			
@@ -228,9 +223,6 @@ public class ImapListener extends Thread {
 
 					if (supportsIdle && server.isUseIdle()
 							&& folder instanceof IMAPFolder) {
-
-						keepAlive = new Thread(new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive");
-						keepAlive.start();
 
 						IMAPFolder f = (IMAPFolder) folder;
 						System.out.println(String.format("[%d:%s@%s] Start IDLE..", server.getId(), server.getUser(), server.getHost()));
@@ -255,12 +247,7 @@ public class ImapListener extends Thread {
 					
 					Thread.sleep(waitInterval * 1000);
 					waitInterval *= 2;
-				} finally {
-					// Shutdown keep alive thread
-					if (keepAlive.isAlive()) {
-						keepAlive.interrupt();
-					}
-				}
+				} 
 			}
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -271,6 +258,12 @@ public class ImapListener extends Thread {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			// Shutdown keep alive thread
+			if (keepAlive.isAlive()) {
+				keepAlive.interrupt();
+			}
 		}
+
 	}
 }
