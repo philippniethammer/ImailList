@@ -222,7 +222,6 @@ public class ImapListener extends Thread {
 					}
 					if (folder == null || !folder.isOpen()) {
 						installFolderListener();
-						keepAlive = new Thread(new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive");
 					}
 					
 					waitInterval = 1;
@@ -230,6 +229,7 @@ public class ImapListener extends Thread {
 					if (supportsIdle && server.isUseIdle()
 							&& folder instanceof IMAPFolder) {
 
+						keepAlive = new Thread(new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive");
 						keepAlive.start();
 
 						IMAPFolder f = (IMAPFolder) folder;
