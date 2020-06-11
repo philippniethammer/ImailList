@@ -12,6 +12,8 @@ import javax.mail.search.AndTerm;
 import javax.mail.search.FlagTerm;
 
 import com.sun.mail.imap.IMAPStore;
+import com.sun.mail.imap.protocol.IMAPProtocol;
+import com.sun.mail.iap.ProtocolException;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.SortTerm;
 
@@ -24,6 +26,48 @@ public class ImapListener extends Thread {
 	IMAPFolder folder;
 	IncommingMailHandler mh;
 	private Server server;
+
+	/**
+	 * Runnable used to keep alive the connection to the IMAP server
+	 *
+	 * @author Juan Martín Sotuyo Dodero <jmsotuyo@monits.com>
+	 */
+	private static class KeepAliveRunnable implements Runnable {
+
+	    private static final long KEEP_ALIVE_FREQ = 300000; // 5 minutes
+
+	    private String msgPrefix;
+	    private IMAPFolder folder;
+
+	    public KeepAliveRunnable(IMAPFolder folder, String msgPrefix) {
+		this.folder = folder;
+		this.msgPrefix = msgPrefix;
+	    }
+
+	    @Override
+	    public void run() {
+		while (!Thread.interrupted()) {
+		    try {
+			Thread.sleep(KEEP_ALIVE_FREQ);
+
+			// Perform a NOOP just to keep alive the connection
+			System.out.println(String.format("%s Performing a NOOP to keep alvie the connection", msgPrefix));
+			folder.doCommand(new IMAPFolder.ProtocolCommand() {
+			    public Object doCommand(IMAPProtocol p)
+				    throws ProtocolException {
+				p.simpleCommand("NOOP", null);
+				return null;
+			    }
+			});
+		    } catch (InterruptedException e) {
+			// Ignore, just aborting the thread...
+		    } catch (MessagingException e) {
+			// Shouldn't really happen...
+			System.out.println(String.format("%s Unexpected exception while keeping alive the IDLE connection: %s", msgPrefix, e.getMessage()));
+		    }
+		}
+	    }
+	}
 
 	public ImapListener(Server server) {
 		this.server = server;
@@ -137,6 +181,13 @@ public class ImapListener extends Thread {
 			}
 			installFolderListener();
 
+			// We need to create a new thread to keep alive the connection
+		    	Thread keepAlive = new Thread(
+				new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive"
+		    	);
+
+			keepAlive.start();
+
 			boolean supportsIdle = false;
 			try {
 				if (folder instanceof IMAPFolder) {
@@ -153,6 +204,11 @@ public class ImapListener extends Thread {
 				System.out.println(String.format("[%d:%s@%s] IDLE disabled: not supported by server.", server.getId(), server.getUser(), server.getHost()));
 				supportsIdle = false;
 			}
+
+	                // Shutdown keep alive thread
+			if (keepAlive.isAlive()) {
+				keepAlive.interrupt();
+		        }
 			
 			//wait time in seconds for retry after exception. Doubles with each exception, resets on connect.
 			int waitInterval = 1;
@@ -166,12 +222,16 @@ public class ImapListener extends Thread {
 					}
 					if (folder == null || !folder.isOpen()) {
 						installFolderListener();
+						keepAlive = new Thread(new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive");
 					}
 					
 					waitInterval = 1;
 
 					if (supportsIdle && server.isUseIdle()
 							&& folder instanceof IMAPFolder) {
+
+						keepAlive.start();
+
 						IMAPFolder f = (IMAPFolder) folder;
 						System.out.println(String.format("[%d:%s@%s] Start IDLE..", server.getId(), server.getUser(), server.getHost()));
 						f.idle();
@@ -195,6 +255,11 @@ public class ImapListener extends Thread {
 					
 					Thread.sleep(waitInterval * 1000);
 					waitInterval *= 2;
+				} finally {
+					// Shutdown keep alive thread
+					if (keepAlive.isAlive()) {
+						keepAlive.interrupt();
+					}
 				}
 			}
 		} catch (InterruptedException e) {
