@@ -1,0 +1,7 @@
+version: 3
+
+services:
+  imaillist:
+    build: .
+    volumes: ./imaillist.cfg:/etc/imaillist.cfg
+    restart: unless-stopped
