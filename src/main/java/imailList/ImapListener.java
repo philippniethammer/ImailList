@@ -91,6 +91,7 @@ public class ImapListener extends Thread {
 
 		// Get a Store object
 		URLName imapUrl = new URLName("imap", server.getHost(), -1, null, server.getUser(), server.getPassword());
+		folder = null;
 		store = new IMAPStore(session, imapUrl);
 
 		int retries = 5;
@@ -175,6 +176,8 @@ public class ImapListener extends Thread {
 	 */
 	public void run() {
 		System.out.println(String.format("[%d:%s@%s] Starting..", server.getId(), server.getUser(), server.getHost()));
+
+		Thread keepAlive = null;
 		try {
 			if (store == null || !store.isConnected()) {
 				connect();
@@ -182,7 +185,7 @@ public class ImapListener extends Thread {
 			installFolderListener();
 
 			// We need to create a new thread to keep alive the connection
-		    	Thread keepAlive = new Thread(
+		    	keepAlive = new Thread(
 				new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive"
 		    	);
 
@@ -216,6 +219,14 @@ public class ImapListener extends Thread {
 						connect();
 					}
 					if (folder == null || !folder.isOpen()) {
+						if (keepAlive != null && keepAlive.isAlive()) {
+							keepAlive.interrupt();
+							keepAlive.join(1000);
+						}
+						keepAlive = new Thread(
+							new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive"
+		    				);
+
 						installFolderListener();
 					}
 					
@@ -260,7 +271,7 @@ public class ImapListener extends Thread {
 			e.printStackTrace();
 		} finally {
 			// Shutdown keep alive thread
-			if (keepAlive.isAlive()) {
+			if (keepAlive != null && keepAlive.isAlive()) {
 				keepAlive.interrupt();
 			}
 		}
