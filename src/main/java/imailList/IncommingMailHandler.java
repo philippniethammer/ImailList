@@ -32,27 +32,27 @@ public class IncommingMailHandler extends Thread {
 	public void handle (Message message) {
 		
 		System.out.println(String.format("[%d:%s@%s] Incomming message: %d",
-				server.getId(), server.getUser(), server.getHost(), message.getMessageNumber()));
+				server.getId(), server.getUser(), server.getImapHost(), message.getMessageNumber()));
 		try {
 			//Don't handle a mail if it's deleted (processed) or flagged (deferred) 
 			if (message.isSet(Flag.DELETED) || message.isSet(Flag.FLAGGED)) {
 				System.out.println(String.format("[%d:%s@%s] Msg %d: Skipped (already known).",
-						server.getId(), server.getUser(), server.getHost(), message.getMessageNumber()));
+						server.getId(), server.getUser(), server.getImapHost(), message.getMessageNumber()));
 				return;
 			}
 		} catch (MessagingException e) {
 			System.out.println(String.format("[%d:%s@%s] Msg %d: Can't check message flags: %s.",
-					server.getId(), server.getUser(), server.getHost(), message.getMessageNumber(), e.getMessage()));
+					server.getId(), server.getUser(), server.getImapHost(), message.getMessageNumber(), e.getMessage()));
 			return;
 		}
 		
 		System.out.println(String.format("[%d:%s@%s] Msg %d is unhandled.",
-				server.getId(), server.getUser(), server.getHost(), message.getMessageNumber()));
+				server.getId(), server.getUser(), server.getImapHost(), message.getMessageNumber()));
 			
 		Set<MailingList> lists = getAffectedLists(message);
 		
 		System.out.println(String.format("[%d:%s@%s] Msg %d: Sent to lists %s",
-				server.getId(), server.getUser(), server.getHost(), message.getMessageNumber(), lists.toString()));
+				server.getId(), server.getUser(), server.getImapHost(), message.getMessageNumber(), lists.toString()));
 		
 		for (MailingList list : lists) {
 			new ListMessageHandler(server, list, message);
@@ -63,7 +63,7 @@ public class IncommingMailHandler extends Thread {
 			message.setFlag(Flag.FLAGGED, true);
 		} catch (MessagingException e) {
 			System.out.println(String.format("[%d:%s@%s] Msg %d: Can't set message flags: %s.",
-					server.getId(), server.getUser(), server.getHost(), message.getMessageNumber(), e.getMessage()));
+					server.getId(), server.getUser(), server.getImapHost(), message.getMessageNumber(), e.getMessage()));
 		}
 	}
 		
@@ -80,17 +80,17 @@ public class IncommingMailHandler extends Thread {
 			Address[] receiverArray = m.getAllRecipients();
 			if (receiverArray == null || receiverArray.length == 0) {
 				System.out.println(String.format("[%d:%s@%s] Msg %d: No receivers!",
-						server.getId(), server.getUser(), server.getHost(), m.getMessageNumber()));
+						server.getId(), server.getUser(), server.getImapHost(), m.getMessageNumber()));
 				return affLists;
 			}
 			receivers.addAll(Arrays.asList(receiverArray));
 		} catch (MessagingException e) {
 			System.out.println(String.format("[%d:%s@%s] Msg %d: Can't extract receivers: %s",
-					server.getId(), server.getUser(), server.getHost(), m.getMessageNumber(), e.getMessage()));
+					server.getId(), server.getUser(), server.getImapHost(), m.getMessageNumber(), e.getMessage()));
 		}		
 		
 		System.out.println(String.format("[%d:%s@%s] Msg %d: Search for receiving lists in %d receivers.",
-				server.getId(), server.getUser(), server.getHost(), m.getMessageNumber(), receivers.size()));
+				server.getId(), server.getUser(), server.getImapHost(), m.getMessageNumber(), receivers.size()));
 		
 		for (Address add : receivers) {
 			if (lists.containsKey(((InternetAddress)add).getAddress())) {
@@ -118,7 +118,7 @@ public class IncommingMailHandler extends Thread {
 			server.getLists().refreshCollection();
 		} catch (SQLException e) {
 			System.out.println(String.format("[%d:%s@%s] Can't refresh mailing lists, using cached: %s.",
-					server.getId(), server.getUser(), server.getHost(), e.getMessage()));
+					server.getId(), server.getUser(), server.getImapHost(), e.getMessage()));
 			return;
 		}
 		
@@ -128,7 +128,7 @@ public class IncommingMailHandler extends Thread {
 		}
 		
 		System.out.println(String.format("[%d:%s@%s] Mailing lists refreshed.",
-				server.getId(), server.getUser(), server.getHost()));
+				server.getId(), server.getUser(), server.getImapHost()));
 		
 	}
 

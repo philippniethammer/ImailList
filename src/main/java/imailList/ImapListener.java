@@ -90,7 +90,7 @@ public class ImapListener extends Thread {
 		// session.setDebug(true);
 
 		// Get a Store object
-		URLName imapUrl = new URLName("imap", server.getHost(), -1, null, server.getUser(), server.getPassword());
+		URLName imapUrl = new URLName("imap", server.getImapHost(), -1, null, server.getUser(), server.getPassword());
 		folder = null;
 		store = new IMAPStore(session, imapUrl);
 
@@ -100,16 +100,16 @@ public class ImapListener extends Thread {
 			try {
 				store.connect();
 				System.out.println(String.format("[%d:%s@%s] Connected.",
-						server.getId(), server.getUser(), server.getHost()));
+						server.getId(), server.getUser(), server.getImapHost()));
 			} catch (AuthenticationFailedException e) {
 				throw e;
 			} catch (MessagingException e) {
 				System.out.println(String.format("[%d:%s@%s] Connection failed: %s",
-						server.getId(), server.getUser(), server.getHost(), e.getMessage()));
+						server.getId(), server.getUser(), server.getImapHost(), e.getMessage()));
 				if (retries > 0) {
 					retries--;
 					System.out.println(String.format("[%d:%s@%s] Retry connect in 10 sek.",
-							server.getId(), server.getUser(), server.getHost()));
+							server.getId(), server.getUser(), server.getImapHost()));
 					Thread.sleep(10000);
 				} else {
 					throw e;
@@ -133,7 +133,7 @@ public class ImapListener extends Thread {
 
 		folder.open(Folder.READ_WRITE);
 		System.out.println(String.format("[%d:%s@%s] folder %s opened.",
-				server.getId(), server.getUser(), server.getHost(), server.getListenFolder()));
+				server.getId(), server.getUser(), server.getImapHost(), server.getListenFolder()));
 
 		// Get missed messages
 		try {
@@ -142,14 +142,14 @@ public class ImapListener extends Thread {
 																    	 new FlagTerm(new Flags(Flags.Flag.DELETED), false)));
 			if (newMessages != null) {
 				System.out.println(String.format("[%d:%s@%s] Processing %d missed messages.",
-						server.getId(), server.getUser(), server.getHost(), newMessages.length));
+						server.getId(), server.getUser(), server.getImapHost(), newMessages.length));
 				for (Message msg : newMessages) {
 					mh.handle(msg);
 				}
 			}
 		} catch (MessagingException e) {
 			System.out.println(String.format("[%d:%s@%s] Cannot search for missed messages: %s",
-					server.getId(), server.getUser(), server.getHost(), e.getMessage()));
+					server.getId(), server.getUser(), server.getImapHost(), e.getMessage()));
 		}
 
 		// Add messageCountListener to listen for new messages
@@ -157,7 +157,7 @@ public class ImapListener extends Thread {
 			public void messagesAdded(MessageCountEvent ev) {
 				Message[] msgs = ev.getMessages();
 				System.out.println(String.format("[%d:%s@%s] Got %d new messages.",
-						server.getId(), server.getUser(), server.getHost(), msgs.length));
+						server.getId(), server.getUser(), server.getImapHost(), msgs.length));
 
 				// Just dump out the new messages
 				for (Message m : msgs) {
@@ -175,7 +175,7 @@ public class ImapListener extends Thread {
 	 * 
 	 */
 	public void run() {
-		System.out.println(String.format("[%d:%s@%s] Starting..", server.getId(), server.getUser(), server.getHost()));
+		System.out.println(String.format("[%d:%s@%s] Starting..", server.getId(), server.getUser(), server.getImapHost()));
 
 		Thread keepAlive = null;
 		try {
@@ -186,7 +186,7 @@ public class ImapListener extends Thread {
 
 			// We need to create a new thread to keep alive the connection
 		    	keepAlive = new Thread(
-				new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive"
+				new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getImapHost())), "IdleConnectionKeepAlive"
 		    	);
 
 			keepAlive.start();
@@ -196,15 +196,15 @@ public class ImapListener extends Thread {
 				if (folder instanceof IMAPFolder) {
 					IMAPFolder f = (IMAPFolder) folder;
 					supportsIdle = true;
-					System.out.println(String.format("[%d:%s@%s] Start IDLE..", server.getId(), server.getUser(), server.getHost()));
+					System.out.println(String.format("[%d:%s@%s] Start IDLE..", server.getId(), server.getUser(), server.getImapHost()));
 					f.idle();
-					System.out.println(String.format("[%d:%s@%s] IDLE returned.", server.getId(), server.getUser(), server.getHost()));
+					System.out.println(String.format("[%d:%s@%s] IDLE returned.", server.getId(), server.getUser(), server.getImapHost()));
 				}
 			} catch (FolderClosedException fex) {
 				System.out.println(String.format("[%d:%s@%s] Folder closed. Reason: %s",
-						server.getId(), server.getUser(), server.getHost(), fex.getMessage()));
+						server.getId(), server.getUser(), server.getImapHost(), fex.getMessage()));
 			} catch (MessagingException mex) {
-				System.out.println(String.format("[%d:%s@%s] IDLE disabled: not supported by server.", server.getId(), server.getUser(), server.getHost()));
+				System.out.println(String.format("[%d:%s@%s] IDLE disabled: not supported by server.", server.getId(), server.getUser(), server.getImapHost()));
 				supportsIdle = false;
 			}
 
@@ -213,7 +213,7 @@ public class ImapListener extends Thread {
 			
 			while (true) {
 				try {
-					System.out.println(String.format("[%d:%s@%s] iterate listening loop.", server.getId(), server.getUser(), server.getHost()));
+					System.out.println(String.format("[%d:%s@%s] iterate listening loop.", server.getId(), server.getUser(), server.getImapHost()));
 
 					if (store == null || !store.isConnected()) {
 						connect();
@@ -224,7 +224,7 @@ public class ImapListener extends Thread {
 							keepAlive.join(1000);
 						}
 						keepAlive = new Thread(
-							new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getHost())), "IdleConnectionKeepAlive"
+							new KeepAliveRunnable(folder, String.format("[%d:%s@%s] ", server.getId(), server.getUser(), server.getImapHost())), "IdleConnectionKeepAlive"
 		    				);
 
 						installFolderListener();
@@ -236,11 +236,11 @@ public class ImapListener extends Thread {
 							&& folder instanceof IMAPFolder) {
 
 						IMAPFolder f = (IMAPFolder) folder;
-						System.out.println(String.format("[%d:%s@%s] Start IDLE..", server.getId(), server.getUser(), server.getHost()));
+						System.out.println(String.format("[%d:%s@%s] Start IDLE..", server.getId(), server.getUser(), server.getImapHost()));
 						f.idle();
-						System.out.println(String.format("[%d:%s@%s] IDLE returned.", server.getId(), server.getUser(), server.getHost()));
+						System.out.println(String.format("[%d:%s@%s] IDLE returned.", server.getId(), server.getUser(), server.getImapHost()));
 					} else {
-						System.out.println(String.format("[%d:%s@%s] Run without IDLE.", server.getId(), server.getUser(), server.getHost()));
+						System.out.println(String.format("[%d:%s@%s] Run without IDLE.", server.getId(), server.getUser(), server.getImapHost()));
 						Thread.sleep(server.getCheckFrequency() * 1000);
 
 						// This is to force the IMAP server to send us
@@ -249,12 +249,12 @@ public class ImapListener extends Thread {
 					}
 				} catch (FolderClosedException e) {
 					System.out.println(String.format("[%d:%s@%s] Folder closed. Reason: %s",
-							server.getId(), server.getUser(), server.getHost(), e.getMessage()));
+							server.getId(), server.getUser(), server.getImapHost(), e.getMessage()));
 				} catch (AuthenticationFailedException e) {
 					throw e;
 				} catch (MessagingException e) {
 					System.out.println(String.format("[%d:%s@%s] Server error, attempt later retry: %s",
-							server.getId(), server.getUser(), server.getHost(), e.getMessage()));
+							server.getId(), server.getUser(), server.getImapHost(), e.getMessage()));
 					
 					Thread.sleep(waitInterval * 1000);
 					waitInterval *= 2;
@@ -265,7 +265,7 @@ public class ImapListener extends Thread {
 			e.printStackTrace();
 		} catch (AuthenticationFailedException e) {
 			System.out.println(String.format("[%d:%s@%s] Authentification failed: %s.",
-					server.getId(), server.getUser(), server.getHost(), e.getMessage()));
+					server.getId(), server.getUser(), server.getImapHost(), e.getMessage()));
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

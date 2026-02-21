@@ -12,7 +12,10 @@ public class Server {
 	private int id;
 
 	@DatabaseField
-	private String host;
+	private String imaphost;
+
+	@DatabaseField
+	private String smtphost;
 	
 	@DatabaseField
 	private String user;
@@ -53,14 +56,26 @@ public class Server {
 	/**
 	 * @return the host
 	 */
-	public String getHost() {
-		return host;
+	public String getImapHost() {
+		return imaphost;
 	}
 	/**
 	 * @param host the host to set
 	 */
-	public void setHost(String host) {
-		this.host = host;
+	public void setImapHost(String host) {
+		this.imaphost = host;
+	}
+	/**
+	 * @return the host
+	 */
+	public String getSmtpHost() {
+		return smtphost;
+	}
+	/**
+	 * @param host the host to set
+	 */
+	public void setSmtpHost(String host) {
+		this.smtphost = host;
 	}
 	/**
 	 * @return the user
@@ -154,10 +169,15 @@ public class Server {
 		Server other = (Server) obj;
 		if (checkFrequency != other.checkFrequency)
 			return false;
-		if (host == null) {
-			if (other.host != null)
+		if (imaphost == null) {
+			if (other.imaphost != null)
 				return false;
-		} else if (!host.equals(other.host))
+		} else if (!imaphost.equals(other.imaphost))
+			return false;
+		if (smtphost == null) {
+			if (other.smtphost != null)
+				return false;
+		} else if (!smtphost.equals(other.smtphost))
 			return false;
 		if (id != other.id)
 			return false;

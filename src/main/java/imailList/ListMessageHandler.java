@@ -53,7 +53,7 @@ public class ListMessageHandler extends Thread {
 			this.list.getMembers().refreshCollection();
 		} catch (SQLException e) {
 			System.out.println(String.format("[%d:%s@%s/%s] Can't refresh member list: %s",
-					server.getId(), server.getUser(), server.getHost(), list.getName(), e.getMessage()));
+					server.getId(), server.getUser(), server.getImapHost(), list.getName(), e.getMessage()));
 		}
 		
 		if (!message.getFolder().isOpen()) {
@@ -61,19 +61,19 @@ public class ListMessageHandler extends Thread {
 				message.getFolder().open(Folder.READ_WRITE);
 			} catch (MessagingException e) {
 				System.out.println(String.format("[%d:%s@%s/%s] Can't open folder: %s",
-						server.getId(), server.getUser(), server.getHost(), list.getName(), e.getMessage()));
+						server.getId(), server.getUser(), server.getImapHost(), list.getName(), e.getMessage()));
 			}
 		}
 
 		if (!isValid()) {
 			System.out.println(String.format("[%d:%s@%s/%s] Msg %d: Ignored.",
-					server.getId(), server.getUser(), server.getHost(), list.getName(), message.getMessageNumber()));
+					server.getId(), server.getUser(), server.getImapHost(), list.getName(), message.getMessageNumber()));
 			return;
 		}
 		
 		try {
 			System.out.println(String.format("[%d:%s@%s/%s] Msg %d: Subject: %s",
-					server.getId(), server.getUser(), server.getHost(), list.getName(),
+					server.getId(), server.getUser(), server.getImapHost(), list.getName(),
 					message.getMessageNumber(), message.getSubject()));
 		} catch (MessagingException e) {}
 
@@ -115,7 +115,7 @@ public class ListMessageHandler extends Thread {
 			}
 		} catch (MessagingException e) {
 			System.out.println(String.format("[%d:%s@%s/%s] Msg %d: Error while validating: %s",
-					server.getId(), server.getUser(), server.getHost(), list.getName(), message.getMessageNumber(), e.getMessage()));
+					server.getId(), server.getUser(), server.getImapHost(), list.getName(), message.getMessageNumber(), e.getMessage()));
 		}
 		return true;
 	}
@@ -160,7 +160,7 @@ public class ListMessageHandler extends Thread {
 			
 			List<Address> recipients = getRecipients();
 			System.out.println(String.format("[%d:%s@%s/%s] Msg %d: Send message to %d recipients",
-					server.getId(), server.getUser(), server.getHost(), list.getName(), message.getMessageNumber(), recipients.size()));
+					server.getId(), server.getUser(), server.getSmtpHost(), list.getName(), message.getMessageNumber(), recipients.size()));
 			sendMessage(msg, recipients);
 
 		} catch (MessagingException e) {
@@ -185,7 +185,7 @@ public class ListMessageHandler extends Thread {
 	    Transport tr;
 		try {
 			tr = session.getTransport("smtp");
-			tr.connect(server.getHost(), server.getUser(), server.getPassword());
+			tr.connect(server.getSmtpHost(), server.getUser(), server.getPassword());
 			message.saveChanges();
 			tr.sendMessage(message, recipients.toArray(new Address[0]));
 		} catch (NoSuchProviderException e) {
@@ -244,7 +244,7 @@ public class ListMessageHandler extends Thread {
 	private void archivate() {
 		try {
 			System.out.println(String.format("[%d:%s@%s/%s] Msg %d: Archivate to: %s",
-					server.getId(), server.getUser(), server.getHost(), list.getName(),
+					server.getId(), server.getUser(), server.getImapHost(), list.getName(),
 					message.getMessageNumber(), list.getArchiveFolder()));
 			
 			ImapConnect();
@@ -253,7 +253,7 @@ public class ListMessageHandler extends Thread {
 
 			if (!folder.exists() && !folder.create(Folder.HOLDS_MESSAGES)) {
 				System.out.println(String.format("[%d:%s@%s/%s] Can't create archive folder %s.",
-						server.getId(), server.getUser(), server.getHost(), list.getName(), list.getArchiveFolder()));
+						server.getId(), server.getUser(), server.getImapHost(), list.getName(), list.getArchiveFolder()));
 				return;
 			}
 
@@ -264,7 +264,7 @@ public class ListMessageHandler extends Thread {
 			String subject = aMessage.getSubject();
 			if (isTagged(subject)) {
 				System.out.println(String.format("[%d:%s@%s/%s] Msg %d: Removing tag for archive.",
-						server.getId(), server.getUser(), server.getHost(), list.getName(),
+						server.getId(), server.getUser(), server.getImapHost(), list.getName(),
 						message.getMessageNumber()));
 				
 				subject = subject.replaceFirst(Pattern.quote(list.getTag()) + " ?", "");
@@ -339,6 +339,6 @@ public class ListMessageHandler extends Thread {
 		store = session.getStore("imap");
 
 		// Connect
-		store.connect(server.getHost(), server.getUser(), server.getPassword());
+		store.connect(server.getImapHost(), server.getUser(), server.getPassword());
 	}
 }
