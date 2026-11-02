@@ -69,7 +69,7 @@
   	<dependency>
   		<groupId>com.google.guava</groupId>
   		<artifactId>guava</artifactId>
-  		<version>19.0-rc2</version>
+  		<version>33.7.1-android</version>
   		<type>jar</type>
   	</dependency>
   	<dependency>
